@@ -200,17 +200,16 @@ def filtrar_e_sugerir(df):
         estoque_full = int(r.get("Estoque Full", 0))
         vendas = int(r.get("Vendas últimos 30 dias", 0))
 
-        # Nova lógica de filtro:
-        # 1. Anúncio "ativo" (sempre incluído)
-        # 2. Anúncio "n/a" COM estoque > 0
-        # 3. Anúncio "inativo" COM vendas nos últimos 30 dias
-        if status == "ativo" or (status == "n/a" and estoque_full > 0) or (status == "inativo" and vendas > 0):
+        # A NOVA LÓGICA DE FILTRO:
+        # Se houve VENDAS > 0, ou o status é "ativo" ou "n/a" com estoque, inclua.
+        # Isso garante que todos os SKUs que tiveram algum giro recente sejam incluídos.
+        if vendas > 0 or status == "ativo" or (status == "n/a" and estoque_full > 0):
             qtd_mon = int(r.get("Boa Qualidade", 0))
             qtd_imp = int(r.get("Qtd. Impulsionar", 0))
             qtd_cor = int(r.get("Qtd. Corrigir", 0))
             qtd_desc = int(r.get("Qtd. Risco Descarte", 0))
 
-            # Lógica de sugestão (mantida igual)
+            # A lógica de sugestão permanece a mesma, pois é ela que classifica a ação.
             if vendas == 0 and qtd_desc > 0:
                 sugestao = "Avaliar retirada / sem reposição"
             elif estoque_full < 5 and vendas >= 10:
@@ -244,7 +243,6 @@ def filtrar_e_sugerir(df):
                 "Comentário estoque": sugestao,
             })
     return pd.DataFrame(rows)
-
 
 # --------------------------
 # Custos (sheet: "Custos por estoque antigo")
@@ -655,4 +653,5 @@ with aba[3]:
         )
 
 st.caption("Feito com ❤️ em Streamlit • Regras espelhadas da macro VBA • Suporta várias empresas na mesma sessão")
+
 

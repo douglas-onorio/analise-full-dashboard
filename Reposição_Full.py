@@ -78,7 +78,8 @@ def to_int(x):
         if pd.isna(x):
             return 0
         if isinstance(x, str):
-            x = x.strip().replace(".", "").replace(",", ".")
+            # Lida com o formato de número brasileiro (ponto como milhar, vírgula como decimal)
+            x = str(x).strip().replace(".", "").replace(",", ".")
             if x == "":
                 return 0
             return int(float(x))
@@ -92,7 +93,8 @@ def to_float(x):
         if pd.isna(x):
             return 0.0
         if isinstance(x, str):
-            x = x.strip().replace(".", "").replace(",", ".")
+            # Lida com o formato de número brasileiro (ponto como milhar, vírgula como decimal)
+            x = str(x).strip().replace(".", "").replace(",", ".")
             if x == "":
                 return 0.0
             return float(x)
@@ -127,27 +129,27 @@ def human_int(n):
 # --------------------------
 # Parsing do Relatório FULL (aba "Resumo") — colunas equivalentes à macro
 # --------------------------
-# Colunas na macro (por letra):
-# D SKU | E #Anúncio | F Produto | I Status | K Vendas30d | L Afeta métrica | M Entrada pendente |
-# P Aptas | Q Não aptas | U Estoque Full | W Boa Qualidade (Qtd monitorar) | X Impulsionar |
-# Y Corrigir | Z Descarte | AA Tempo até esgotar
+# Colunas na macro (por letra, conforme sua atualização):
+# D SKU | E #Anúncio | G Produto | J Status | L Vendas30d | M Afeta métrica | N Entrada pendente |
+# P Aptas | Q Não aptas | V Estoque Full | X Boa Qualidade (Qtd monitorar) | Y Impulsionar |
+# Z Qtd. Corrigir | AA Risco Descarte | AB Tempo até esgotar
 
 FULL_MAP = {
     "SKU": "D",
     "# Anúncio": "E",
-    "Produto": "F",
-    "Status": "I",
-    "Vendas últimos 30 dias": "K",
-    "Afeta métrica estoque": "L",
-    "Entrada pendente": "M",
-    "Aptas venda": "P",
-    "Não aptas": "Q",
-    "Estoque Full": "U",
-    "Boa Qualidade": "W",  # qtd monitorar
-    "Qtd. Impulsionar": "X",
-    "Qtd. Corrigir": "Y",
-    "Qtd. Risco Descarte": "Z",
-    "Tempo até esgotar": "AA",
+    "Produto": "G",                     # ATUALIZADO (era F)
+    "Status": "J",                      # ATUALIZADO (era I)
+    "Vendas últimos 30 dias": "L",      # ATUALIZADO (era K)
+    "Afeta métrica estoque": "M",       # ATUALIZADO (era L)
+    "Entrada pendente": "N",            # ATUALIZADO (era M)
+    "Aptas venda": "P",                 # (MANTIDO)
+    "Não aptas": "Q",                   # (MANTIDO)
+    "Estoque Full": "V",                # ATUALIZADO (era U)
+    "Boa Qualidade": "X",               # ATUALIZADO (era W) - qtd monitorar
+    "Qtd. Impulsionar": "Y",            # ATUALIZADO (era X)
+    "Qtd. Corrigir": "Z",               # ATUALIZADO (era Y)
+    "Qtd. Risco Descarte": "AA",        # ATUALIZADO (era Z)
+    "Tempo até esgotar": "AB",          # ATUALIZADO (era AA)
 }
 
 
@@ -379,7 +381,7 @@ def consolidar_empresas(objs: dict):
         return pd.DataFrame()
     out = pd.DataFrame(list(buckets.values()))
 
-    # Margem % (placeholder  — na macro: dados(16) = (Total Vendas * 1) / Custo_total)
+    # Margem % (placeholder — na macro: dados(16) = (Total Vendas * 1) / Custo_total)
     out["Margem %"] = np.where(out["Custo Total"] > 0, (out["Total Vendas 30d"] * 1.0) / out["Custo Total"], 0.0)
     return out
 
@@ -623,7 +625,7 @@ with aba[2]:
             # Ordenar por criticidade
             ord_map = {"Ruptura total": 0, "Reposição urgente": 1, "Reposição recomendada": 2, "OK": 3}
             df_rep["_ord"] = df_rep["Criticidade"].map(ord_map)
-            df_rep = df_rep.sort_values(["_ord", "Qtd. Sugerida"], ascending=[True, False]).drop(columns=["_ord"])            
+            df_rep = df_rep.sort_values(["_ord", "Qtd. Sugerida"], ascending=[True, False]).drop(columns=["_ord"])
             st.dataframe(df_rep, use_container_width=True, hide_index=True)
 
 # --- 4) Export
@@ -653,5 +655,3 @@ with aba[3]:
         )
 
 st.caption("Feito com ❤️ em Streamlit • Regras espelhadas da macro VBA • Suporta várias empresas na mesma sessão")
-
-
